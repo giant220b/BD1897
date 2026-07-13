@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>대피훈련 참여 현황</title>
+<style>
+  :root{
+    --accent:#D64541;
+    --accent-dark:#A93226;
+    --accent-bg:#FDECEA;
+    --ink:#1F2933;
+    --ink-soft:#52606D;
+    --ink-mute:#9AA5B1;
+    --line:#E4E7EB;
+    --card:#FFFFFF;
+    --page:#F5F6F8;
+    --ok:#2E7D32;
+    --ok-bg:#EAF6EA;
+    --warn-bg:#FFF6E5;
+    --warn-ink:#8A5A00;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--page);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:480px;margin:0 auto;min-height:100vh;padding:0 0 40px;}
+  .topbar{
+    background:var(--accent);
+    color:#fff;
+    padding:20px 20px 24px;
+    border-radius:0 0 20px 20px;
+  }
+  .topbar h1{margin:0 0 4px;font-size:19px;font-weight:700;letter-spacing:-0.2px;}
+  .topbar p{margin:0;font-size:13px;opacity:0.9;}
+  .content{padding:20px;}
+  .step-label{font-size:12px;color:var(--ink-mute);font-weight:600;letter-spacing:0.3px;margin:0 0 10px;text-transform:uppercase;}
+  .card-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .pick-card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:20px 14px;text-align:center;cursor:pointer;
+    transition:border-color .15s, transform .1s;
+  }
+  .pick-card:active{transform:scale(0.97);}
+  .pick-card:hover{border-color:var(--accent);}
+  .pick-card .ic{font-size:26px;margin-bottom:8px;color:var(--accent);}
+  .pick-card .nm{font-size:14px;font-weight:600;}
+  .pick-card.wide{grid-column:1/-1;}
+  .floor-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .floor-btn{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:18px 8px;text-align:center;cursor:pointer;font-size:15px;font-weight:600;
+  }
+  .floor-btn:active{transform:scale(0.97);}
+  .floor-btn .sub{display:block;font-size:11px;color:var(--ink-mute);font-weight:400;margin-top:4px;}
+  .floor-btn.done{border-color:var(--ok);background:var(--ok-bg);}
+  .back-link{
+    display:inline-flex;align-items:center;gap:4px;color:var(--ink-soft);
+    font-size:13px;background:none;border:none;padding:0 0 16px;cursor:pointer;
+  }
+  .form-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;}
+  .form-title{font-size:16px;font-weight:700;margin:0 0 2px;}
+  .form-sub{font-size:13px;color:var(--ink-soft);margin:0 0 18px;}
+  .total-row{display:flex;align-items:center;gap:8px;margin-bottom:18px;}
+  .total-badge{
+    display:inline-flex;align-items:center;gap:8px;background:var(--accent-bg);color:var(--accent-dark);
+    font-size:13px;font-weight:600;padding:6px 12px;border-radius:8px;
+  }
+  .field{margin-bottom:18px;}
+  .field label{display:block;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
+  .num-input{
+    width:100%;font-size:22px;font-weight:700;padding:12px 14px;
+    border:1.5px solid var(--line);border-radius:10px;color:var(--ink);
+    -moz-appearance:textfield;
+  }
+  .num-input:focus{outline:none;border-color:var(--accent);}
+  .absent-box{
+    background:var(--warn-bg);border-radius:10px;padding:14px;margin-bottom:18px;
+  }
+  .absent-box .abs-count{font-size:13px;color:var(--warn-ink);font-weight:600;margin:0 0 12px;}
+  .reason-row{display:grid;grid-template-columns:1fr 76px;align-items:center;gap:10px;margin-bottom:10px;}
+  .reason-row:last-child{margin-bottom:0;}
+  .reason-row label{font-size:13px;color:var(--ink);}
+  .reason-row input{
+    width:100%;font-size:15px;font-weight:600;padding:8px 10px;
+    border:1.5px solid var(--line);border-radius:8px;text-align:center;
+  }
+  .reason-row input:focus{outline:none;border-color:var(--accent);}
+  .sum-check{font-size:12px;margin-top:10px;font-weight:600;}
+  .sum-check.ok{color:var(--ok);}
+  .sum-check.bad{color:var(--accent-dark);}
+  .submit-btn{
+    width:100%;padding:15px;background:var(--accent);color:#fff;border:none;
+    border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;
+  }
+  .submit-btn:disabled{background:#D8DCE1;color:#9AA5B1;cursor:not-allowed;}
+  .submit-btn:active:not(:disabled){transform:scale(0.99);}
+  .err-msg{font-size:12px;color:var(--accent-dark);margin:8px 0 0;}
+  .success-wrap{text-align:center;padding:30px 10px 10px;}
+  .success-wrap .ic{font-size:48px;color:var(--ok);margin-bottom:14px;}
+  .success-wrap h2{margin:0 0 6px;font-size:18px;}
+  .success-wrap p{margin:0 0 24px;font-size:13px;color:var(--ink-soft);}
+  .summary-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;text-align:left;margin-bottom:20px;}
+  .summary-row{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line);}
+  .summary-row:last-child{border-bottom:none;}
+  .summary-row .v{font-weight:700;}
+  .again-btn{
+    width:100%;padding:14px;background:var(--card);border:1.5px solid var(--line);
+    border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:var(--ink);
+  }
+  .footer-link{
+    text-align:center;padding:24px 20px 0;
+  }
+  .footer-link button{
+    background:none;border:none;color:var(--ink-mute);font-size:12px;
+    text-decoration:underline;cursor:pointer;
+  }
+  .admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .admin-header h2{font-size:16px;margin:0;}
+  .icon-btn{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;color:var(--ink-soft);}
+  .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .stat-box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;}
+  .stat-box .lbl{font-size:12px;color:var(--ink-mute);margin-bottom:4px;}
+  .stat-box .val{font-size:22px;font-weight:700;}
+  .stat-box .val.accent{color:var(--accent);}
+  .admin-table{width:100%;border-collapse:collapse;font-size:12.5px;background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--line);}
+  .admin-table th{background:var(--page);color:var(--ink-soft);font-weight:600;padding:8px 6px;text-align:left;border-bottom:1px solid var(--line);}
+  .admin-table td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .admin-table tr:last-child td{border-bottom:none;}
+  .admin-table .num{text-align:center;}
+  .badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 8px;border-radius:6px;}
+  .badge.done{background:var(--ok-bg);color:var(--ok);}
+  .badge.pending{background:var(--warn-bg);color:var(--warn-ink);}
+  .group-total-row td{font-weight:700;background:var(--page);}
+  .total-edit{width:48px;font-size:12px;padding:3px;border:1px solid var(--line);border-radius:6px;text-align:center;}
+  .reset-btn{
+    width:100%;margin-top:16px;padding:12px;background:none;border:1px solid var(--accent-dark);
+    color:var(--accent-dark);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;
+  }
+  .section-caption{font-size:11px;color:var(--ink-mute);margin:16px 0 8px;}
+  .loading{text-align:center;padding:60px 20px;color:var(--ink-mute);font-size:13px;}
+  .text-input{
+    width:100%;font-size:15px;font-weight:400;padding:12px 14px;
+    border:1.5px solid var(--line);border-radius:10px;color:var(--ink);
+  }
+  .text-input:focus{outline:none;border-color:var(--accent);}
+  .total-cell{display:flex;align-items:center;justify-content:center;gap:6px;}
+  .edit-link{background:none;border:none;color:var(--accent-dark);font-size:11px;font-weight:600;cursor:pointer;padding:0;text-decoration:underline;}
+  .row-total-input{width:52px;font-size:12px;padding:4px;border:1.5px solid var(--accent);border-radius:6px;text-align:center;}
+  .row-save-btn{background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;padding:4px 8px;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">불러오는 중...</div></div>
+
+<script>
+const GROUPS = [
+  { key:'교보생명', name:'교보생명', icon:'\uD83C\uDFE2' },
+  { key:'메디쎄이', name:'메디쎄이', icon:'\uD83C\uDFEC' },
+  { key:'DWP홀딩스', name:'DWP홀딩스', icon:'\uD83C\uDFE3' },
+  { key:'서울관광재단', name:'서울관광재단', icon:'\uD83C\uDFDB' },
+  { key:'동화약품', name:'동화약품', icon:'\uD83C\uDFEA', floors:['16층','15층','14층','13층','12층','11층'] }
+];
+const DEFAULT_TOTALS = {
+  '교보생명':150, '메디쎄이':28, 'DWP홀딩스':7, '서울관광재단':7,
+  '동화약품_16층':5, '동화약품_15층':6, '동화약품_14층':35,
+  '동화약품_13층':37, '동화약품_12층':36, '동화약품_11층':30
+};
+const REASONS = [
+  {key:'vacation', label:'휴가'},
+  {key:'trip', label:'출장'},
+  {key:'outside', label:'외근/외출'},
+  {key:'etc', label:'기타'}
+];
+
+function allEntryKeys(){
+  const out = [];
+  GROUPS.forEach(g=>{
+    if(g.floors){ g.floors.forEach(f=> out.push({key:g.key+'_'+f, label:g.key+' '+f})); }
+    else out.push({key:g.key, label:g.name});
+  });
+  return out;
+}
+const ENTRY_KEYS = allEntryKeys();
+
+const ADMIN_ID = '총무팀';
+const ADMIN_PW = '총무팀';
+
+// ===== 배포 후 아래 URL을 본인의 Google Apps Script 웹앱 URL로 교체하세요 =====
+// 예: 'https://script.google.com/macros/s/AKfycb.../exec'
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWL69gogKWb9jBeYcWw6aB6URitSz2Sfvus0cpAI7CY4dAy7-a0PEE1_OR0bwZjseK/exec';
+
+let state = { view:'select', group:null, floor:null, totals:{...DEFAULT_TOTALS}, submissions:{}, lastEntryKey:null, editingRow:null, editingFormTotal:false, isAdminAuthed:false, loginError:'' };
+
+async function gsGet(action){
+  const res = await fetch(APPS_SCRIPT_URL + '?action=' + encodeURIComponent(action));
+  if(!res.ok) throw new Error('network error');
+  return res.json();
+}
+async function gsPost(payload){
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // preflight(OPTIONS) 회피용
+    body: JSON.stringify(payload)
+  });
+  if(!res.ok) throw new Error('network error');
+  return res.json();
+}
+
+async function loadTotals(){
+  try{
+    const data = await gsGet('getAll');
+    if(data && data.totals) state.totals = {...DEFAULT_TOTALS, ...data.totals};
+    if(data && data.submissions) state.submissions = data.submissions;
+  }catch(e){ console.error('loadTotals failed', e); }
+}
+async function saveTotals(){ /* 총원은 개별 저장(saveTotalRemote)으로 처리되므로 여기서는 별도 동작 없음 */ }
+async function loadAllSubmissions(){
+  try{
+    const data = await gsGet('getAll');
+    if(data && data.totals) state.totals = {...DEFAULT_TOTALS, ...data.totals};
+    if(data && data.submissions) state.submissions = data.submissions;
+  }catch(e){ console.error('loadAllSubmissions failed', e); }
+}
+async function saveSubmission(entryKey, data){
+  await gsPost({ action:'submit', entryKey, data });
+  state.submissions[entryKey] = data;
+}
+async function saveTotalRemote(entryKey, total){
+  await gsPost({ action:'updateTotal', entryKey, total });
+  state.totals[entryKey] = total;
+}
+async function resetAllRemote(){
+  await gsPost({ action:'resetAll' });
+  state.submissions = {};
+}
+
+function entryLabel(entryKey){
+  const found = ENTRY_KEYS.find(e=>e.key===entryKey);
+  return found ? found.label : entryKey;
+}
+
+function isBackendConfigured(){
+  return APPS_SCRIPT_URL && APPS_SCRIPT_URL.indexOf('PASTE_YOUR') === -1;
+}
+
+function viewSetupNeeded(){
+  return `
+    <div class="topbar">
+      <h1>설정이 필요합니다</h1>
+      <p>Google Apps Script 연결 주소가 아직 입력되지 않았습니다</p>
+    </div>
+    <div class="content">
+      <div class="form-card">
+        <p class="form-sub">코드 상단의 <b>APPS_SCRIPT_URL</b> 값을 배포된 Google Apps Script 웹앱 URL로 교체한 뒤 다시 게시(Publish)해주세요.</p>
+      </div>
+    </div>
+  `;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  if(!isBackendConfigured()){ app.innerHTML = viewSetupNeeded(); return; }
+  if(state.view==='select') app.innerHTML = viewSelect();
+  else if(state.view==='floor') app.innerHTML = viewFloor();
+  else if(state.view==='form') app.innerHTML = viewForm();
+  else if(state.view==='success') app.innerHTML = viewSuccess();
+  else if(state.view==='adminLogin') app.innerHTML = viewAdminLogin();
+  else if(state.view==='admin') app.innerHTML = viewAdmin();
+  attachHandlers();
+}
+
+function viewSelect(){
+  let cards = GROUPS.map(g=>`
+    <div class="pick-card" data-group="${g.key}">
+      <div class="ic">${g.icon}</div>
+      <div class="nm">${g.name}</div>
+    </div>`).join('');
+  return `
+    <div class="topbar">
+      <h1>화재 대피훈련 참여 현황</h1>
+      <p>소속 회사를 선택해주세요</p>
+    </div>
+    <div class="content">
+      <p class="step-label">Step 1. 회사 선택</p>
+      <div class="card-grid">${cards}</div>
+    </div>
+    <div class="footer-link"><button data-go="adminGate">관리자 화면</button></div>
+  `;
+}
+
+function viewFloor(){
+  const g = GROUPS.find(x=>x.key===state.group);
+  const btns = g.floors.map(f=>{
+    const ek = g.key+'_'+f;
+    const done = !!state.submissions[ek];
+    return `<div class="floor-btn ${done?'done':''}" data-floor="${f}">${f}<span class="sub">${done?'제출완료':'미제출'}</span></div>`;
+  }).join('');
+  return `
+    <div class="topbar">
+      <h1>${g.name}</h1>
+      <p>담당 층을 선택해주세요</p>
+    </div>
+    <div class="content">
+      <button class="back-link" data-go="select">← 회사 다시 선택</button>
+      <p class="step-label">Step 2. 층 선택</p>
+      <div class="floor-grid">${btns}</div>
+    </div>
+  `;
+}
+
+function currentEntryKey(){
+  if(state.group==='동화약품') return '동화약품_'+state.floor;
+  return state.group;
+}
+
+function viewForm(){
+  const ek = currentEntryKey();
+  const label = entryLabel(ek);
+  const total = state.totals[ek] || 0;
+  const backTarget = state.group==='동화약품' ? 'floor' : 'select';
+  return `
+    <div class="topbar">
+      <h1>${label}</h1>
+      <p>참석 인원을 입력해주세요</p>
+    </div>
+    <div class="content">
+      <button class="back-link" data-go="${backTarget}">← 뒤로</button>
+      <div class="form-card">
+        <p class="form-title">${label}</p>
+        <div class="total-row">
+          ${state.editingFormTotal
+            ? `<input type="number" id="formTotalInput" class="row-total-input" value="${total}" min="0"><button class="row-save-btn" id="formTotalSaveBtn">저장</button>`
+            : `<div class="total-badge">총원 ${total}명<button class="edit-link" id="formTotalEditBtn">(수정)</button></div>`
+          }
+        </div>
+        <div class="field">
+          <label for="presentInput">현재 참석 인원</label>
+          <input type="number" id="presentInput" class="num-input" min="0" max="${total}" placeholder="0" inputmode="numeric">
+        </div>
+        <div id="absentSection"></div>
+        <div id="errMsg"></div>
+        <button class="submit-btn" id="submitBtn" disabled>제출하기</button>
+      </div>
+    </div>
+  `;
+}
+
+function viewSuccess(){
+  const ek = state.lastEntryKey;
+  const label = entryLabel(ek);
+  const s = state.submissions[ek];
+  if(!s) return viewSelect();
+  const reasonLines = REASONS.map(r=>{
+    const v = s.reasons[r.key]||0;
+    return v>0 ? `<div class="summary-row"><span>${r.label}</span><span class="v">${v}명</span></div>` : '';
+  }).join('');
+  return `
+    <div class="topbar">
+      <h1>제출 완료</h1>
+      <p>${label} 참여 현황이 저장되었습니다</p>
+    </div>
+    <div class="content">
+      <div class="success-wrap">
+        <div class="ic">✓</div>
+        <h2>제출이 완료되었습니다</h2>
+        <p>필요 시 다시 제출하면 이전 값을 덮어씁니다</p>
+        <div class="summary-box">
+          <div class="summary-row"><span>총원</span><span class="v">${s.total}명</span></div>
+          <div class="summary-row"><span>참석</span><span class="v">${s.present}명</span></div>
+          <div class="summary-row"><span>불참</span><span class="v">${s.total-s.present}명</span></div>
+          ${reasonLines}
+        </div>
+        <button class="again-btn" data-go="select">처음 화면으로</button>
+      </div>
+    </div>
+  `;
+}
+
+function viewAdminLogin(){
+  return `
+    <div class="topbar">
+      <h1>관리자 로그인</h1>
+      <p>총무팀 계정으로 로그인해주세요</p>
+    </div>
+    <div class="content">
+      <button class="back-link" data-go="select">← 처음으로</button>
+      <div class="form-card">
+        <div class="field">
+          <label for="adminId">아이디</label>
+          <input type="text" id="adminId" class="text-input" placeholder="아이디 입력" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="adminPw">비밀번호</label>
+          <input type="password" id="adminPw" class="text-input" placeholder="비밀번호 입력">
+        </div>
+        <div id="loginErr">${state.loginError ? `<p class="err-msg">${state.loginError}</p>` : ''}</div>
+        <button class="submit-btn" id="loginBtn">로그인</button>
+      </div>
+    </div>
+  `;
+}
+
+function viewAdmin(){
+  let totalAll=0, presentAll=0, submittedCount=0;
+  const rows = ENTRY_KEYS.map(e=>{
+    const total = state.totals[e.key]||0;
+    totalAll += total;
+    const s = state.submissions[e.key];
+    let presentCell='-', absentCell='-', statusBadge='<span class="badge pending">미제출</span>';
+    if(s){
+      presentAll += s.present;
+      submittedCount++;
+      presentCell = s.present;
+      const parts = REASONS.filter(r=>s.reasons[r.key]>0).map(r=>r.label+' '+s.reasons[r.key]).join(', ');
+      absentCell = parts || (s.total-s.present===0 ? '없음' : (s.total-s.present));
+      statusBadge = '<span class="badge done">제출완료</span>';
+    }
+    const totalCell = state.editingRow === e.key
+      ? `<div class="total-cell"><input type="number" class="row-total-input" id="rowTotalInput" value="${total}" min="0"><button class="row-save-btn" data-save-total="${e.key}">저장</button></div>`
+      : `<div class="total-cell">${total}<button class="edit-link" data-edit-total="${e.key}">(수정)</button></div>`;
+    return `<tr>
+      <td>${e.label}</td>
+      <td class="num">${totalCell}</td>
+      <td class="num">${presentCell}</td>
+      <td>${absentCell}</td>
+      <td>${statusBadge}</td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <div class="topbar">
+      <h1>관리자 화면</h1>
+      <p>전체 참여 현황 집계</p>
+    </div>
+    <div class="content">
+      <button class="back-link" data-go="select">← 회사 선택 화면으로</button>
+      <div class="stat-row">
+        <div class="stat-box"><div class="lbl">전체 총원</div><div class="val">${totalAll}명</div></div>
+        <div class="stat-box"><div class="lbl">현재 참석 (집계)</div><div class="val accent">${presentAll}명</div></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box"><div class="lbl">제출 현황</div><div class="val">${submittedCount} / ${ENTRY_KEYS.length}</div></div>
+        <div class="stat-box"><div class="lbl">미확인 인원</div><div class="val">${totalAll-presentAll-(ENTRY_KEYS.length-submittedCount>0?0:0)}명</div></div>
+      </div>
+      <div class="admin-header">
+        <h2>그룹별 현황</h2>
+        <div style="display:flex;gap:8px;">
+          <button class="icon-btn" id="refreshBtn">새로고침</button>
+          <button class="icon-btn" id="logoutBtn">로그아웃</button>
+        </div>
+      </div>
+      <table class="admin-table">
+        <thead><tr><th>구분</th><th class="num">총원</th><th class="num">참석</th><th>불참 사유</th><th>상태</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <p class="section-caption">※ 참석 인원은 각 그룹(동화약품은 층별) 담당자가 제출한 값을 합산한 것입니다. 총원 옆 (수정)으로 총원 수를 바로 고칠 수 있습니다.</p>
+      <button class="reset-btn" id="resetBtn">전체 제출 기록 초기화</button>
+    </div>
+  `;
+}
+
+function updateFormLive(){
+  const ek = currentEntryKey();
+  const total = state.totals[ek] || 0;
+  const presentInput = document.getElementById('presentInput');
+  const absentSection = document.getElementById('absentSection');
+  const submitBtn = document.getElementById('submitBtn');
+  const errMsg = document.getElementById('errMsg');
+  let present = parseInt(presentInput.value, 10);
+  if(isNaN(present)){ absentSection.innerHTML=''; submitBtn.disabled=true; errMsg.innerHTML=''; return; }
+  if(present<0) present=0;
+  if(present>total) present=total;
+  const absent = total - present;
+  if(absent<=0){
+    absentSection.innerHTML = `<div class="absent-box"><p class="abs-count">전원 참석했습니다. 불참 사유 입력이 필요없습니다.</p></div>`;
+    submitBtn.disabled = false;
+    errMsg.innerHTML = '';
+    return;
+  }
+  const reasonRows = REASONS.map(r=>`
+    <div class="reason-row">
+      <label>${r.label}</label>
+      <input type="number" min="0" class="reason-input" data-reason="${r.key}" placeholder="0" inputmode="numeric">
+    </div>`).join('');
+  absentSection.innerHTML = `
+    <div class="absent-box">
+      <p class="abs-count">불참 인원 ${absent}명 — 사유별로 입력해주세요</p>
+      ${reasonRows}
+      <div class="sum-check bad" id="sumCheck">사유별 인원 합계가 ${absent}명이 되어야 제출할 수 있습니다</div>
+    </div>
+  `;
+  submitBtn.disabled = true;
+  errMsg.innerHTML = '';
+  Array.from(absentSection.querySelectorAll('.reason-input')).forEach(inp=>{
+    inp.addEventListener('input', ()=> checkReasonSum(absent));
+  });
+}
+
+function checkReasonSum(absent){
+  const inputs = Array.from(document.querySelectorAll('.reason-input'));
+  const sum = inputs.reduce((a,i)=> a + (parseInt(i.value,10)||0), 0);
+  const sumCheck = document.getElementById('sumCheck');
+  const submitBtn = document.getElementById('submitBtn');
+  if(sum===absent){
+    sumCheck.className = 'sum-check ok';
+    sumCheck.textContent = '입력 완료 — 제출할 수 있습니다';
+    submitBtn.disabled = false;
+  } else {
+    sumCheck.className = 'sum-check bad';
+    sumCheck.textContent = `사유별 인원 합계(${sum}명)가 불참 인원(${absent}명)과 일치해야 합니다`;
+    submitBtn.disabled = true;
+  }
+}
+
+async function handleSubmit(){
+  const ek = currentEntryKey();
+  const total = state.totals[ek] || 0;
+  const presentInput = document.getElementById('presentInput');
+  const present = parseInt(presentInput.value, 10) || 0;
+  const absent = total - present;
+  const reasons = {};
+  REASONS.forEach(r=> reasons[r.key]=0);
+  if(absent>0){
+    Array.from(document.querySelectorAll('.reason-input')).forEach(inp=>{
+      reasons[inp.dataset.reason] = parseInt(inp.value,10)||0;
+    });
+  }
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '제출 중...';
+  try{
+    await saveSubmission(ek, { total, present, reasons, submittedAt: new Date().toISOString() });
+    state.lastEntryKey = ek;
+    state.view = 'success';
+    render();
+  }catch(e){
+    submitBtn.disabled = false;
+    submitBtn.textContent = '제출하기';
+    document.getElementById('errMsg').innerHTML = '<p class="err-msg">제출 중 오류가 발생했습니다. 다시 시도해주세요.</p>';
+  }
+}
+
+async function handleResetAll(){
+  if(!confirm('모든 제출 기록을 초기화할까요? 이 작업은 되돌릴 수 없습니다.')) return;
+  try{
+    await resetAllRemote();
+  }catch(e){ alert('초기화 중 오류가 발생했습니다. 네트워크 상태를 확인해주세요.'); }
+  render();
+}
+
+async function handleSaveFormTotal(key){
+  const inp = document.getElementById('formTotalInput');
+  const v = parseInt(inp.value, 10);
+  const presentBefore = document.getElementById('presentInput') ? document.getElementById('presentInput').value : '';
+  if(!isNaN(v) && v>=0){
+    try{ await saveTotalRemote(key, v); }catch(e){ alert('총원 저장 중 오류가 발생했습니다.'); }
+  }
+  state.editingFormTotal = false;
+  render();
+  const presentInput = document.getElementById('presentInput');
+  if(presentInput && presentBefore!==''){
+    presentInput.value = presentBefore;
+    updateFormLive();
+  }
+}
+
+async function handleSaveRowTotal(key){
+  const inp = document.getElementById('rowTotalInput');
+  const v = parseInt(inp.value, 10);
+  if(!isNaN(v) && v>=0){
+    try{ await saveTotalRemote(key, v); }catch(e){ alert('총원 저장 중 오류가 발생했습니다.'); }
+  }
+  state.editingRow = null;
+  render();
+}
+
+function handleAdminLogin(){
+  const idVal = document.getElementById('adminId').value.trim();
+  const pwVal = document.getElementById('adminPw').value.trim();
+  if(idVal===ADMIN_ID && pwVal===ADMIN_PW){
+    state.isAdminAuthed = true;
+    state.loginError = '';
+    state.view = 'admin';
+    loadAllSubmissions().then(render);
+  } else {
+    state.loginError = '아이디 또는 비밀번호가 올바르지 않습니다.';
+    render();
+  }
+}
+
+function attachHandlers(){
+  document.querySelectorAll('[data-group]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      state.group = el.dataset.group;
+      state.editingFormTotal = false;
+      const g = GROUPS.find(x=>x.key===state.group);
+      state.view = g.floors ? 'floor' : 'form';
+      render();
+    });
+  });
+  document.querySelectorAll('[data-floor]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      state.floor = el.dataset.floor;
+      state.editingFormTotal = false;
+      state.view = 'form';
+      render();
+    });
+  });
+  document.querySelectorAll('[data-go]').forEach(el=>{
+    el.addEventListener('click', async ()=>{
+      const dest = el.dataset.go;
+      if(dest==='adminGate'){
+        if(state.isAdminAuthed){
+          state.view='admin';
+          await loadAllSubmissions();
+          render();
+        } else {
+          state.loginError = '';
+          state.view = 'adminLogin';
+          render();
+        }
+      } else if(dest==='select'){
+        state.group=null; state.floor=null; state.view='select'; state.editingFormTotal=false;
+        render();
+      } else {
+        state.editingFormTotal = false;
+        state.view = dest;
+        render();
+      }
+    });
+  });
+  const presentInput = document.getElementById('presentInput');
+  if(presentInput) presentInput.addEventListener('input', updateFormLive);
+  const submitBtn = document.getElementById('submitBtn');
+  if(submitBtn) submitBtn.addEventListener('click', handleSubmit);
+  const formTotalEditBtn = document.getElementById('formTotalEditBtn');
+  if(formTotalEditBtn) formTotalEditBtn.addEventListener('click', ()=>{ state.editingFormTotal = true; render(); });
+  const formTotalSaveBtn = document.getElementById('formTotalSaveBtn');
+  if(formTotalSaveBtn) formTotalSaveBtn.addEventListener('click', ()=> handleSaveFormTotal(currentEntryKey()));
+  const loginBtn = document.getElementById('loginBtn');
+  if(loginBtn) loginBtn.addEventListener('click', handleAdminLogin);
+  const adminPwInput = document.getElementById('adminPw');
+  if(adminPwInput) adminPwInput.addEventListener('keydown', (ev)=>{ if(ev.key==='Enter') handleAdminLogin(); });
+  const refreshBtn = document.getElementById('refreshBtn');
+  if(refreshBtn) refreshBtn.addEventListener('click', async ()=>{ await loadAllSubmissions(); render(); });
+  const resetBtn = document.getElementById('resetBtn');
+  if(resetBtn) resetBtn.addEventListener('click', handleResetAll);
+  const logoutBtn = document.getElementById('logoutBtn');
+  if(logoutBtn) logoutBtn.addEventListener('click', ()=>{
+    state.isAdminAuthed = false;
+    state.group=null; state.floor=null; state.view='select';
+    render();
+  });
+  document.querySelectorAll('[data-edit-total]').forEach(el=>{
+    el.addEventListener('click', ()=>{ state.editingRow = el.dataset.editTotal; render(); });
+  });
+  document.querySelectorAll('[data-save-total]').forEach(el=>{
+    el.addEventListener('click', ()=> handleSaveRowTotal(el.dataset.saveTotal));
+  });
+}
+
+(async function init(){
+  if(isBackendConfigured()) await loadTotals();
+  render();
+})();
+</script>
+</body>
+</html>
